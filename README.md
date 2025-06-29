@@ -1,6 +1,6 @@
 # ✈️ PromptPilot
 
-PromptPilot is an AI-powered prompt evaluation platform that helps users craft better prompts through quality analysis, scoring, and refinements. Free users get 15 evaluations, and can upgrade to a subscription for unlimited access.
+PromptPilot is an AI-powered prompt evaluation platform that helps users craft better prompts through quality analysis, scoring, and refinements. 
 
 ---
 
