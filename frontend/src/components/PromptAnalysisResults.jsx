@@ -38,7 +38,6 @@ const PromptAnalysisResults = ({ analysis }) => {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -51,7 +50,6 @@ const PromptAnalysisResults = ({ analysis }) => {
       transition={{ duration: 0.3 }}
       className="border-t border-gray-700 dark:border-gray-600 pt-8 space-y-6"
     >
-      
       {/* Score Display */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
@@ -79,7 +77,13 @@ const PromptAnalysisResults = ({ analysis }) => {
           className="mt-2"
         >
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${status.color}`}>
-            <div className={`w-2 h-2 rounded-full mr-2 animate-pulse ${status.color.includes('green') ? 'bg-green-400' : status.color.includes('yellow') ? 'bg-yellow-400' : 'bg-red-400'}`}></div>
+            <div className={`w-2 h-2 rounded-full mr-2 animate-pulse ${
+              status.color.includes('green')
+                ? 'bg-green-400'
+                : status.color.includes('yellow')
+                  ? 'bg-yellow-400'
+                  : 'bg-red-400'
+            }`}></div>
             {status.label}
           </span>
         </motion.div>
@@ -109,7 +113,6 @@ const PromptAnalysisResults = ({ analysis }) => {
         {/* Tab Content */}
         <div className="p-6">
           <AnimatePresence mode="wait">
-            
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <motion.div
@@ -120,7 +123,6 @@ const PromptAnalysisResults = ({ analysis }) => {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                
                 {/* Chart Type Toggle */}
                 <div className="flex items-center justify-between">
                   <h4 className="text-white dark:text-gray-100 font-semibold">Quality Breakdown</h4>
@@ -155,12 +157,12 @@ const PromptAnalysisResults = ({ analysis }) => {
 
                 {/* Criteria Breakdown */}
                 <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(analysis.criteria).map(([key, score], index) => (
+                  {Object.entries(analysis?.criteria || {}).map(([key, score], idx) => (
                     <motion.div
                       key={key}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: idx * 0.1 }}
                       className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-600 dark:border-gray-500"
                     >
                       <div className="flex justify-between items-center mb-2">
@@ -173,19 +175,19 @@ const PromptAnalysisResults = ({ analysis }) => {
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${score}%` }}
-                          transition={{ duration: 0.8, delay: index * 0.1 }}
+                          transition={{ duration: 0.8, delay: idx * 0.1 }}
                           className={`h-2 rounded-full ${
                             score >= 80 ? 'bg-green-400' : score >= 60 ? 'bg-yellow-400' : 'bg-red-400'
                           }`}
-                        ></motion.div>
+                        />
                       </div>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* Strengths and Improvements */}
+                {/* Strengths & Improvements */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  {analysis.strengths.length > 0 && (
+                  {Array.isArray(analysis.strengths) && analysis.strengths.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -193,26 +195,25 @@ const PromptAnalysisResults = ({ analysis }) => {
                       className="bg-green-900/20 border border-green-500/30 rounded-lg p-4"
                     >
                       <h4 className="text-green-400 font-semibold mb-3 flex items-center">
-                        <span className="mr-2">✅</span>
-                        Strengths
+                        <span className="mr-2">✅</span>Strengths
                       </h4>
                       <ul className="space-y-2">
-                        {analysis.strengths.map((strength, index) => (
+                        {analysis.strengths.map((s, i) => (
                           <motion.li
-                            key={index}
+                            key={i}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2, delay: index * 0.1 }}
+                            transition={{ duration: 0.2, delay: i * 0.1 }}
                             className="text-green-200 text-sm"
                           >
-                            • {strength}
+                            • {s}
                           </motion.li>
                         ))}
                       </ul>
                     </motion.div>
                   )}
-                  
-                  {analysis.improvements.length > 0 && (
+
+                  {Array.isArray(analysis.improvements) && analysis.improvements.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -220,19 +221,18 @@ const PromptAnalysisResults = ({ analysis }) => {
                       className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4"
                     >
                       <h4 className="text-orange-400 font-semibold mb-3 flex items-center">
-                        <span className="mr-2">🎯</span>
-                        Areas to Improve
+                        <span className="mr-2">🎯</span>Areas to Improve
                       </h4>
                       <ul className="space-y-2">
-                        {analysis.improvements.map((improvement, index) => (
+                        {analysis.improvements.map((imp, i) => (
                           <motion.li
-                            key={index}
+                            key={i}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2, delay: index * 0.1 }}
+                            transition={{ duration: 0.2, delay: i * 0.1 }}
                             className="text-orange-200 text-sm"
                           >
-                            • {improvement.area} ({improvement.score}%)
+                            • {imp.area} ({imp.score}%)
                           </motion.li>
                         ))}
                       </ul>
@@ -253,31 +253,33 @@ const PromptAnalysisResults = ({ analysis }) => {
                 className="space-y-4"
               >
                 <h4 className="text-white dark:text-gray-100 font-semibold mb-4">Improvement Recommendations</h4>
-                {analysis.suggestions.map((suggestion, index) => (
+                {analysis.suggestions?.map((s, i) => (
                   <motion.div
-                    key={index}
+                    key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    transition={{ duration: 0.3, delay: i * 0.1 }}
                     className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-600 dark:border-gray-500"
                   >
                     <div className="flex items-start space-x-3">
                       <div className={`w-2 h-2 rounded-full mt-2 ${
-                        suggestion.priority === 'high' ? 'bg-red-400' : 
-                        suggestion.priority === 'medium' ? 'bg-yellow-400' : 'bg-blue-400'
-                      }`}></div>
+                        s.priority === 'high'   ? 'bg-red-400' :
+                        s.priority === 'medium' ? 'bg-yellow-400' : 'bg-blue-400'
+                      }`}/>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-blue-400 font-medium">{suggestion.category}</h5>
+                          <h5 className="text-blue-400 font-medium">{s.category}</h5>
                           <span className={`text-xs px-2 py-1 rounded-full ${
-                            suggestion.priority === 'high' ? 'bg-red-900/50 text-red-200' :
-                            suggestion.priority === 'medium' ? 'bg-yellow-900/50 text-yellow-200' :
+                            s.priority === 'high'   ? 'bg-red-900/50 text-red-200' :
+                            s.priority === 'medium' ? 'bg-yellow-900/50 text-yellow-200' :
                             'bg-blue-900/50 text-blue-200'
                           }`}>
-                            {suggestion.priority} priority
+                            {s.priority} priority
                           </span>
                         </div>
-                        <p className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed">{suggestion.suggestion}</p>
+                        <p className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed">
+                          {s.suggestion}
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -295,24 +297,24 @@ const PromptAnalysisResults = ({ analysis }) => {
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
-                <h4 className="text-white dark:text-gray-100 font-semibold mb-4">Enhanced Prompt Version</h4>
+                <h4 className="text-white dark:text-gray-100 font-semibold mb-4">
+                  Enhanced Prompt Version
+                </h4>
                 <div className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-6 border border-cyan-500/30">
                   <div className="flex items-center justify-between mb-4">
                     <h5 className="text-cyan-400 font-medium">Optimized Prompt</h5>
-                    <button 
+                    <button
                       onClick={() => copyToClipboard(analysis.refinedPrompt)}
                       className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     >
                       Copy
                     </button>
                   </div>
-                  <div className="bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
-                    <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal">
-                      {analysis.refinedPrompt}
-                    </pre>
-                  </div>
+                  <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
+                    {analysis.refinedPrompt}
+                  </pre>
                 </div>
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4"> 
                   <p className="text-blue-200 text-sm">
                     <strong>💡 Tip:</strong> This refined version includes better structure, context, and formatting specifications to improve AI response quality.
                   </p>
@@ -330,16 +332,16 @@ const PromptAnalysisResults = ({ analysis }) => {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                <div>
-                  <h4 className="text-white dark:text-gray-100 font-semibold mb-4">Tone-Based Variations</h4>
-                  <p className="text-gray-300 dark:text-gray-400 text-sm mb-6">
-                    Different tones can significantly impact the AI's response style and content. Choose the tone that best fits your needs.
-                  </p>
-                </div>
+                <h4 className="text-white dark:text-gray-100 font-semibold mb-4">
+                  Tone-Based Variations
+                </h4>
+                <p className="text-gray-300 dark:text-gray-400 text-sm mb-6">
+                  Different tones can significantly impact the AI's response style and content. Choose the tone that best fits your needs.
+                </p>
 
                 {/* Tone Selector */}
                 <div className="flex flex-wrap gap-2 mb-6">
-                  {Object.entries(analysis.toneVariations).map(([key, variation]) => (
+                  {Object.entries(analysis?.toneVariations || {}).map(([key, variation]) => (
                     <button
                       key={key}
                       onClick={() => setSelectedTone(key)}
@@ -355,7 +357,7 @@ const PromptAnalysisResults = ({ analysis }) => {
                 </div>
 
                 {/* Selected Tone Variation */}
-                {analysis.toneVariations[selectedTone] && (
+                {analysis.toneVariations?.[selectedTone] && (
                   <motion.div
                     key={selectedTone}
                     initial={{ opacity: 0, y: 20 }}
@@ -372,18 +374,16 @@ const PromptAnalysisResults = ({ analysis }) => {
                           {analysis.toneVariations[selectedTone].description}
                         </p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => copyToClipboard(analysis.toneVariations[selectedTone].prompt)}
                         className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         Copy
                       </button>
                     </div>
-                    <div className="bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
-                      <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal">
-                        {analysis.toneVariations[selectedTone].prompt}
-                      </pre>
-                    </div>
+                    <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
+                      {analysis.toneVariations[selectedTone].prompt}
+                    </pre>
                   </motion.div>
                 )}
               </motion.div>

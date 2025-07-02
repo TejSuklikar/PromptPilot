@@ -1,3 +1,4 @@
+// src/components/HomePage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,14 +6,10 @@ import { useHistory } from '../context/HistoryContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PromptCard from './PromptCard';
+import PromptAnalysisResults from './PromptAnalysisResults';  // ← import the results component
 import HistoryCarousel from './HistoryCarousel';
-import { analyzePrompt } from '../utils/promptAnalyzer';
+import axios from 'axios';
 
-/**
- * HomePage Component - Main dashboard with enhanced PromptCard and user status
- * 
- * Shows the comprehensive prompt evaluation tool and user credit information
- */
 const HomePage = () => {
   const { user, useCredit } = useAuth();
   const { promptHistory } = useHistory();
@@ -21,40 +18,39 @@ const HomePage = () => {
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
 
   const handleAnalyzeClick = async () => {
-    // Check if user has credits (if logged in)
     if (user && user.plan === 'free' && !useCredit()) {
       toast.error('No credits remaining. Please upgrade to Pro for unlimited evaluations.');
       return;
     }
 
     setIsAnalyzing(true);
-    
-    // Show analyzing toast
-    const analyzingToast = toast.loading('Analyzing prompt quality...');
-    
-    // Simulate API processing time for better UX
-    setTimeout(() => {
-      const promptAnalysis = analyzePrompt(prompt);
-      setAnalysis(promptAnalysis);
-      setIsAnalyzing(false);
-      
-      // Dismiss loading toast and show success
-      toast.dismiss(analyzingToast);
+    const loadingToast = toast.loading('Analyzing prompt quality...');
+
+    try {
+      const res = await axios.post(
+        'http://localhost:4000/score',
+        { prompt },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      setAnalysis(res.data);
       toast.success('Analysis complete!');
-      
-      // Show credits remaining if user is on free plan
+    } catch (err) {
+      console.error('❌ API Error:', err);
+      toast.error('Failed to analyze prompt');
+    } finally {
+      setIsAnalyzing(false);
+      toast.dismiss(loadingToast);
       if (user && user.plan === 'free') {
         toast(`${user.credits} of 15 free evaluations left`, {
           icon: '📊',
           duration: 3000,
         });
       }
-    }, 1500);
+    }
   };
 
   const handlePromptChange = (newPrompt) => {
     setPrompt(newPrompt);
-    // Reset analysis when prompt changes significantly
     if (analysis && Math.abs(newPrompt.length - prompt.length) > 10) {
       setAnalysis(null);
     }
@@ -69,8 +65,8 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black py-8">
       <div className="max-w-6xl mx-auto px-4">
-        
-        {/* Main PromptCard */}
+
+        {/* Prompt input + Analyze button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,6 +82,18 @@ const HomePage = () => {
           />
         </motion.div>
 
+        {/* Render the API-driven analysis as soon as it arrives */}
+        {analysis && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-12"
+          >
+            <PromptAnalysisResults analysis={analysis} />
+          </motion.div>
+        )}
+
         {/* History Carousel */}
         {promptHistory.length > 0 && (
           <HistoryCarousel
@@ -94,7 +102,7 @@ const HomePage = () => {
           />
         )}
 
-        {/* User Status Section */}
+        {/* User Status / Account Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -103,9 +111,10 @@ const HomePage = () => {
         >
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 max-w-md w-full shadow-lg">
             {user ? (
-              // Logged in user status
               <div className="text-center">
-                <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3">Account Status</h3>
+                <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3">
+                  Account Status
+                </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400 text-sm">Plan:</span>
@@ -126,8 +135,11 @@ const HomePage = () => {
                       className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-500/30 rounded-md"
                     >
                       <p className="text-yellow-800 dark:text-yellow-200 text-xs text-center">
-                        Running low on credits! 
-                        <Link to="/account" className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-500 dark:hover:text-yellow-300 ml-1 underline">
+                        Running low on credits!
+                        <Link
+                          to="/account"
+                          className="text-yellow-600 dark:text-yellow-400 ml-1 underline"
+                        >
                           Upgrade to Pro
                         </Link>
                       </p>
@@ -136,15 +148,16 @@ const HomePage = () => {
                 </div>
               </div>
             ) : (
-              // Not logged in
               <div className="text-center">
-                <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3">Get Started</h3>
+                <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3">
+                  Get Started
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  Create an account to track your evaluations and get 15 free comprehensive analyses.
+                  Create an account to track your evaluations and get 15 free analyses.
                 </p>
                 <Link
                   to="/auth"
-                  className="inline-block bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-2 rounded-md font-medium hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900"
+                  className="inline-block bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-2 rounded-md font-medium hover:shadow-lg transition-all duration-300"
                 >
                   Create Account
                 </Link>
@@ -156,7 +169,7 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* Feature Highlights */}
+        {/* Feature Highlights (only when no analysis is shown) */}
         {!analysis && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -164,20 +177,32 @@ const HomePage = () => {
             transition={{ duration: 0.3, delay: 0.4 }}
             className="mt-16 grid md:grid-cols-3 gap-6 max-w-4xl mx-auto"
           >
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors duration-300 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center shadow-sm hover:border-blue-300">
               <div className="text-3xl mb-3">🎯</div>
-              <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2">Quality Scoring</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Get detailed scores across 6 quality criteria with actionable insights.</p>
+              <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                Quality Scoring
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Get detailed scores across 6 quality criteria with actionable insights.
+              </p>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors duration-300 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center shadow-sm hover:border-blue-300">
               <div className="text-3xl mb-3">✨</div>
-              <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2">Refined Versions</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Receive optimized versions of your prompts with better structure and clarity.</p>
+              <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                Refined Versions
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Receive optimized versions of your prompts with better structure and clarity.
+              </p>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors duration-300 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center shadow-sm hover:border-blue-300">
               <div className="text-3xl mb-3">🎭</div>
-              <h4 className="text-gray-900 dark:text-gray-100 font-semibold mb-2">Tone Variations</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Explore different tones and styles to match your specific use case.</p>
+              <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                Tone Variations
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Explore different tones and styles to match your use case.
+              </p>
             </div>
           </motion.div>
         )}

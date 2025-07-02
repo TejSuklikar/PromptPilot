@@ -1,22 +1,20 @@
-// Load environment variables from .env
 require("dotenv").config();
-
 const express = require("express");
-const cors = require("cors");
+const cors    = require("cors");
 
-const app = express();
+const pingRoute  = require("./routes/ping");
+const scoreRoute = require("./routes/score");
+
+const app  = express();
 const PORT = process.env.PORT || 4000;
 
-// Enable CORS so your React frontend can talk here
 app.use(cors());
 app.use(express.json());
 
-// Health-check endpoint
-app.get("/ping", (req, res) => {
-  res.json({ message: "pong" });
-});
+// Mount the routers:
+app.use("/ping", pingRoute);
+app.use("/score", scoreRoute);
 
-// Start the server
 app.listen(PORT, () => {
-  console.log(`Backend server listening on http://localhost:${PORT}`);
+  console.log(`Backend listening on http://localhost:${PORT}`);
 });
