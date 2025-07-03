@@ -9,7 +9,7 @@ import AnalysisChart from './AnalysisChart';
  */
 const PromptAnalysisResults = ({ analysis }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedTone, setSelectedTone] = useState('professional');
+  const [selectedRefinedVersion, setSelectedRefinedVersion] = useState(0);
   const [chartType, setChartType] = useState('radar');
 
   if (!analysis) return null;
@@ -28,12 +28,11 @@ const PromptAnalysisResults = ({ analysis }) => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'suggestions', label: 'Suggestions', icon: '💡' },
-    { id: 'refined', label: 'Refined Version', icon: '✨' },
-    { id: 'variations', label: 'Tone Variations', icon: '🎭' }
+    { id: 'suggestions', label: 'Feedback', icon: '💡' },
+    { id: 'refined', label: 'Refined Versions', icon: '✨' }
   ];
 
-  const status = getScoreStatus(analysis.score);
+  const status = getScoreStatus(analysis.overall_score);
 
   const copyToClipboard = async (text) => {
     try {
@@ -57,14 +56,14 @@ const PromptAnalysisResults = ({ analysis }) => {
         transition={{ duration: 0.4, type: 'spring', stiffness: 100 }}
         className="text-center"
       >
-        <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-900 dark:bg-gray-800 border-2 shadow-lg ${getScoreColor(analysis.score)}`}>
+        <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-900 dark:bg-gray-800 border-2 shadow-lg ${getScoreColor(analysis.overall_score)}`}>
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className={`font-bold text-2xl ${getScoreColor(analysis.score).split(' ')[0]}`}
+            className={`font-bold text-2xl ${getScoreColor(analysis.overall_score).split(' ')[0]}`}
           >
-            {analysis.score}
+            {analysis.overall_score}
           </motion.span>
         </div>
         <p className="mt-3 text-xs text-gray-300 dark:text-gray-400 font-medium uppercase tracking-widest">
@@ -157,7 +156,7 @@ const PromptAnalysisResults = ({ analysis }) => {
 
                 {/* Criteria Breakdown */}
                 <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(analysis?.criteria || {}).map(([key, score], idx) => (
+                  {Object.entries(analysis?.criteria_scores || {}).map(([key, score], idx) => (
                     <motion.div
                       key={key}
                       initial={{ opacity: 0, y: 20 }}
@@ -168,7 +167,7 @@ const PromptAnalysisResults = ({ analysis }) => {
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-gray-200 dark:text-gray-300 text-sm font-medium capitalize">{key}</span>
                         <span className={`text-sm font-bold ${getScoreColor(score).split(' ')[0]}`}>
-                          {score}%
+                          {score}
                         </span>
                       </div>
                       <div className="w-full bg-gray-700 dark:bg-gray-600 rounded-full h-2">
@@ -184,65 +183,10 @@ const PromptAnalysisResults = ({ analysis }) => {
                     </motion.div>
                   ))}
                 </div>
-
-                {/* Strengths & Improvements */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {Array.isArray(analysis.strengths) && analysis.strengths.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                      className="bg-green-900/20 border border-green-500/30 rounded-lg p-4"
-                    >
-                      <h4 className="text-green-400 font-semibold mb-3 flex items-center">
-                        <span className="mr-2">✅</span>Strengths
-                      </h4>
-                      <ul className="space-y-2">
-                        {analysis.strengths.map((s, i) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2, delay: i * 0.1 }}
-                            className="text-green-200 text-sm"
-                          >
-                            • {s}
-                          </motion.li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  )}
-
-                  {Array.isArray(analysis.improvements) && analysis.improvements.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                      className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4"
-                    >
-                      <h4 className="text-orange-400 font-semibold mb-3 flex items-center">
-                        <span className="mr-2">🎯</span>Areas to Improve
-                      </h4>
-                      <ul className="space-y-2">
-                        {analysis.improvements.map((imp, i) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2, delay: i * 0.1 }}
-                            className="text-orange-200 text-sm"
-                          >
-                            • {imp.area} ({imp.score}%)
-                          </motion.li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  )}
-                </div>
               </motion.div>
             )}
 
-            {/* Suggestions Tab */}
+            {/* Feedback Tab */}
             {activeTab === 'suggestions' && (
               <motion.div
                 key="suggestions"
@@ -250,44 +194,65 @@ const PromptAnalysisResults = ({ analysis }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-4"
+                className="space-y-6"
               >
-                <h4 className="text-white dark:text-gray-100 font-semibold mb-4">Improvement Recommendations</h4>
-                {analysis.suggestions?.map((s, i) => (
+                {/* Strengths */}
+                {analysis.feedback?.strengths && analysis.feedback.strengths.length > 0 && (
                   <motion.div
-                    key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: i * 0.1 }}
-                    className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-600 dark:border-gray-500"
+                    transition={{ duration: 0.3 }}
+                    className="bg-green-900/20 border border-green-500/30 rounded-lg p-4"
                   >
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        s.priority === 'high'   ? 'bg-red-400' :
-                        s.priority === 'medium' ? 'bg-yellow-400' : 'bg-blue-400'
-                      }`}/>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-blue-400 font-medium">{s.category}</h5>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            s.priority === 'high'   ? 'bg-red-900/50 text-red-200' :
-                            s.priority === 'medium' ? 'bg-yellow-900/50 text-yellow-200' :
-                            'bg-blue-900/50 text-blue-200'
-                          }`}>
-                            {s.priority} priority
-                          </span>
-                        </div>
-                        <p className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed">
-                          {s.suggestion}
-                        </p>
-                      </div>
-                    </div>
+                    <h4 className="text-green-400 font-semibold mb-3 flex items-center">
+                      <span className="mr-2">✅</span>Strengths
+                    </h4>
+                    <ul className="space-y-2">
+                      {analysis.feedback.strengths.map((strength, i) => (
+                        <motion.li
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2, delay: i * 0.1 }}
+                          className="text-green-200 text-sm"
+                        >
+                          • {strength}
+                        </motion.li>
+                      ))}
+                    </ul>
                   </motion.div>
-                ))}
+                )}
+
+                {/* Improvements */}
+                {analysis.feedback?.improvements && analysis.feedback.improvements.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4"
+                  >
+                    <h4 className="text-orange-400 font-semibold mb-3 flex items-center">
+                      <span className="mr-2">🎯</span>Areas to Improve
+                    </h4>
+                    <ul className="space-y-2">
+                      {analysis.feedback.improvements.map((improvement, i) => (
+                        <motion.li
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2, delay: i * 0.1 }}
+                          className="text-orange-200 text-sm"
+                        >
+                          • {improvement}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
-            {/* Refined Version Tab */}
+            {/* Refined Versions Tab */}
             {activeTab === 'refined' && (
               <motion.div
                 key="refined"
@@ -295,97 +260,62 @@ const PromptAnalysisResults = ({ analysis }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                <h4 className="text-white dark:text-gray-100 font-semibold mb-4">
-                  Enhanced Prompt Version
-                </h4>
-                <div className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-6 border border-cyan-500/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-cyan-400 font-medium">Optimized Prompt</h5>
-                    <button
-                      onClick={() => copyToClipboard(analysis.refinedPrompt)}
-                      className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
-                    {analysis.refinedPrompt}
-                  </pre>
-                </div>
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4"> 
-                  <p className="text-blue-200 text-sm">
-                    <strong>💡 Tip:</strong> This refined version includes better structure, context, and formatting specifications to improve AI response quality.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Tone Variations Tab */}
-            {activeTab === 'variations' && (
-              <motion.div
-                key="variations"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
                 <h4 className="text-white dark:text-gray-100 font-semibold mb-4">
-                  Tone-Based Variations
+                  Enhanced Prompt Versions
                 </h4>
-                <p className="text-gray-300 dark:text-gray-400 text-sm mb-6">
-                  Different tones can significantly impact the AI's response style and content. Choose the tone that best fits your needs.
-                </p>
-
-                {/* Tone Selector */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {Object.entries(analysis?.toneVariations || {}).map(([key, variation]) => (
-                    <button
-                      key={key}
-                      onClick={() => setSelectedTone(key)}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        selectedTone === key
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 dark:bg-gray-600 text-gray-300 hover:bg-gray-600 dark:hover:bg-gray-500'
-                      }`}
-                    >
-                      {variation.name}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Selected Tone Variation */}
-                {analysis.toneVariations?.[selectedTone] && (
-                  <motion.div
-                    key={selectedTone}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-6 border border-purple-500/30"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h5 className="text-purple-400 font-medium">
-                          {analysis.toneVariations[selectedTone].name} Tone
-                        </h5>
-                        <p className="text-gray-400 dark:text-gray-500 text-sm">
-                          {analysis.toneVariations[selectedTone].description}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(analysis.toneVariations[selectedTone].prompt)}
-                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      >
-                        Copy
-                      </button>
+                
+                {/* Version Selector */}
+                {analysis.refined_versions && analysis.refined_versions.length > 0 && (
+                  <>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {analysis.refined_versions.map((version, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedRefinedVersion(index)}
+                          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            selectedRefinedVersion === index
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-700 dark:bg-gray-600 text-gray-300 hover:bg-gray-600 dark:hover:bg-gray-500'
+                          }`}
+                        >
+                          {version.version}
+                        </button>
+                      ))}
                     </div>
-                    <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
-                      {analysis.toneVariations[selectedTone].prompt}
-                    </pre>
-                  </motion.div>
+
+                    {/* Selected Version */}
+                    <motion.div
+                      key={selectedRefinedVersion}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-6 border border-cyan-500/30"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h5 className="text-cyan-400 font-medium">
+                          {analysis.refined_versions[selectedRefinedVersion].version} Version
+                        </h5>
+                        <button
+                          onClick={() => copyToClipboard(analysis.refined_versions[selectedRefinedVersion].prompt)}
+                          className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                      <pre className="text-gray-200 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-normal bg-gray-800 dark:bg-gray-700 rounded-md p-4 border border-gray-600 dark:border-gray-500">
+                        {analysis.refined_versions[selectedRefinedVersion].prompt}
+                      </pre>
+                    </motion.div>
+                  </>
                 )}
+
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4"> 
+                  <p className="text-blue-200 text-sm">
+                    <strong>💡 Tip:</strong> These refined versions are tailored for different use cases. Choose the one that best matches your intended purpose.
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

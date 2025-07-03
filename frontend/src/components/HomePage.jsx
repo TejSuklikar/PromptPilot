@@ -6,9 +6,8 @@ import { useHistory } from '../context/HistoryContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PromptCard from './PromptCard';
-import PromptAnalysisResults from './PromptAnalysisResults';  // ← import the results component
+import PromptAnalysisResults from './PromptAnalysisResults';
 import HistoryCarousel from './HistoryCarousel';
-import axios from 'axios';
 
 const HomePage = () => {
   const { user, useCredit } = useAuth();
@@ -27,15 +26,52 @@ const HomePage = () => {
     const loadingToast = toast.loading('Analyzing prompt quality...');
 
     try {
-      const res = await axios.post(
-        'http://localhost:4000/score',
-        { prompt },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      setAnalysis(res.data);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock analysis data
+      const mockAnalysis = {
+        overall_score: Math.floor(Math.random() * 40) + 60, // 60-100 range
+        criteria_scores: {
+          clarity: Math.floor(Math.random() * 40) + 60,
+          specificity: Math.floor(Math.random() * 40) + 60,
+          context: Math.floor(Math.random() * 40) + 60,
+          structure: Math.floor(Math.random() * 40) + 60,
+          actionability: Math.floor(Math.random() * 40) + 60,
+          completeness: Math.floor(Math.random() * 40) + 60
+        },
+        feedback: {
+          strengths: [
+            "Clear and well-structured prompt",
+            "Good use of specific examples",
+            "Appropriate context provided"
+          ],
+          improvements: [
+            "Consider adding more specific constraints",
+            "Could benefit from clearer output format specification",
+            "Add more context about the intended use case"
+          ]
+        },
+        refined_versions: [
+          {
+            version: "Professional",
+            prompt: prompt + " Please provide a professional and detailed response."
+          },
+          {
+            version: "Concise",
+            prompt: prompt + " Please provide a brief and concise response."
+          },
+          {
+            version: "Creative",
+            prompt: prompt + " Please provide a creative and engaging response."
+          }
+        ]
+      };
+
+      setAnalysis(mockAnalysis);
       toast.success('Analysis complete!');
     } catch (err) {
-      console.error('❌ API Error:', err);
+      console.error('❌ Analysis Error:', err);
       toast.error('Failed to analyze prompt');
     } finally {
       setIsAnalyzing(false);
@@ -82,7 +118,7 @@ const HomePage = () => {
           />
         </motion.div>
 
-        {/* Render the API-driven analysis as soon as it arrives */}
+        {/* Render the analysis results */}
         {analysis && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}

@@ -23,8 +23,8 @@ import { motion } from 'framer-motion';
  * Safely handles missing or null data.
  */
 const AnalysisChart = ({ analysis, type = 'radar' }) => {
-  // guard against missing data
-  const criteria = analysis?.criteria;
+  // Guard against missing data - updated to use criteria_scores
+  const criteria = analysis?.criteria_scores;
   if (!criteria || typeof criteria !== 'object') return null;
 
   // Transform criteria data for charts
@@ -34,7 +34,7 @@ const AnalysisChart = ({ analysis, type = 'radar' }) => {
     fullMark: 100
   }));
 
-  // helper to pick bar/radar colors
+  // Helper to pick bar/radar colors
   const getScoreColor = (score) => {
     if (score >= 80) return '#10b981'; // green-500
     if (score >= 60) return '#f59e0b'; // yellow-500
@@ -78,7 +78,7 @@ const AnalysisChart = ({ analysis, type = 'radar' }) => {
     );
   }
 
-  // bar chart
+  // Bar chart
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -122,7 +122,6 @@ const AnalysisChart = ({ analysis, type = 'radar' }) => {
             dataKey="score"
             fill="#3b82f6"
             radius={[4, 4, 0, 0]}
-            // override fill per bar
           >
             {chartData.map((entry, index) => (
               <motion.rect
@@ -141,4 +140,3 @@ const AnalysisChart = ({ analysis, type = 'radar' }) => {
 };
 
 export default AnalysisChart;
-  
