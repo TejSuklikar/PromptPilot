@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15 # postgres version
+    environment:
+      POSTGRES_DATABASE: promptpilot # name of database
+      POSTGRES_USER: promptpilot_user # created a user
+      POSTGRES_PASSWORD: promptpilot_password 
+    ports:
+      - "5432:5432" # Made it accessible on port 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379" # Made it accessible on port 6379
+    volumes:
+      - redis_data:/data
+
+volumes: # volumes are used to save our data permanently 
+  postgres_data:
+  redis_data:
