@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useHistory } from '../context/HistoryContext';
 import PromptAnalysisResults from './PromptAnalysisResults';
 import LoadingSkeleton, { ButtonSpinner } from './LoadingSkeleton';
 
@@ -16,8 +15,6 @@ const PromptCard = ({
   analysis,
   isAnalyzing = false
 }) => {
-  const { addToHistory } = useHistory();
-
   // Add keyboard shortcut for analysis
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -33,12 +30,7 @@ const PromptCard = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [prompt, onScoreClick, isAnalyzing]);
 
-  // Add to history when analysis completes
-  useEffect(() => {
-    if (analysis && prompt) {
-      addToHistory(prompt, analysis);
-    }
-  }, [analysis, prompt, addToHistory]);
+  // REMOVED: The problematic addToHistory useEffect - this was causing the infinite loop
 
   return (
     <motion.div

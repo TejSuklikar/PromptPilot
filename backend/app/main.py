@@ -1,15 +1,26 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.api.routes import router
-from app.db.database import get_db, engine
-from app.core.config import settings
+from api.routes import router
+from db.database import get_db, engine
+from core.config import settings
+import psycopg2
 
 # Create the FastAPI app
 app = FastAPI(
     title=settings.api_title,
     description="AI-powered prompt evaluation and optimization",
     version=settings.api_version
+)
+
+# Add CORS middleware for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include our API routes
@@ -20,8 +31,8 @@ app.include_router(router, prefix="/api")
 def read_root():
     return {"message": "PromptPilot API is running!", "status": "healthy"}
 
-import psycopg2
-from app.core.config import settings
+
+
 
 # Test database connection
 @app.get("/test-db")

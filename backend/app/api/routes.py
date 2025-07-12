@@ -1,15 +1,13 @@
 from fastapi import APIRouter
+from .analyze import router as analyze_router
 
-# Create a router for our API endpoints
+# Main router that combines all endpoint routers
 router = APIRouter()
 
-@router.post("/analyze-prompt")
-def analyze_prompt():
-    return {
-        "message": "Prompt analysis endpoint - coming soon!",
-        "status": "under_development"
-    }
+# Include the analyze router with /api prefix
+router.include_router(analyze_router, prefix="/api", tags=["analysis"])
 
-@router.get("/health")
-def health_check():
-    return {"status": "healthy", "service": "PromptPilot API"}
+@router.get("/")
+def root():
+    """Root endpoint"""
+    return {"message": "PromptPilot API is running", "version": "1.0.0"}
